@@ -59,12 +59,27 @@ enum class SpotType {
     Large
 };
 
+class Ticket {
+public: 
+    int spotNumber;
+    int entryTime;
+
+    Ticket(int spot = 0, int entry = 0) : spotNumber(spot), entryTime(entry) {}
+
+    int calculateFee(int exitTime) {
+        int duration = exitTime - entryTime;
+        int rate = 10; // 10 per hour
+        return max(1, duration) * rate;
+    }
+};
+
 class ParkingSpot {
 protected: 
     int spotNumber;
     bool occupied;
     SpotType type;
     Vehicle* parkedVehicle; // Changed to pointer
+    Ticket ticket;
 
 public:
     ParkingSpot(int number, SpotType t) : spotNumber(number), type(t), occupied(false), parkedVehicle(nullptr) {}
@@ -90,18 +105,26 @@ public:
         return true;
     }
 
-    bool ParkVehicle(Vehicle& vehicle) {
+    bool ParkVehicle(Vehicle& vehicle, int entryTime) {
         if(occupied || !canFitVehicle(vehicle)) return false;
         
         parkedVehicle = new Vehicle(vehicle);
+        ticket = Ticket(spotNumber, entryTime);
         occupied = true;
+        cout << "Vehicle [" << vehicle.getPlate() << "] parked at Spot " << spotNumber << ", Entry Time: " << entryTime << endl;
         return true;
     }
 
-    void removeVehicle() {
+    bool unpark(const string& plate, int exitTime) {
+        if (!occupied || !parkedVehicle || parkedVehicle->getPlate() != plate) return false;
+        int fee = ticket.calculateFee(exitTime);
+        cout << "Vehicle [" << plate << "] unparked from Spot " << spotNumber
+             << ". Duration: " << (exitTime - ticket.entryTime)
+             << " hrs. Fee: ₹" << fee << endl;
         delete parkedVehicle;
         parkedVehicle = nullptr;
         occupied = false;
+        return true;
     }
 
     string getParkedVehiclePlate() {
@@ -141,12 +164,20 @@ public:
     bool parkVehicle(Vehicle& vehicle) {
         for(auto& spot : spots) {
             if(!spot.isOccupied() && spot.canFitVehicle(vehicle)) {
-                spot.ParkVehicle(vehicle);
-                cout << "Vehicle [" << vehicle.getPlate() << "] parked at Spot " << spot.getSpotNumber() << "\n";
-                return true;
+                return spot.ParkVehicle(vehicle, 0); // Using 0 as default entry time
             }
         }
         cout << "No available spot for vehicle [" << vehicle.getPlate() << "]\n";
+        return false;
+    }
+
+    bool unparkVehicle(const string& plate, int exitTime) {
+        for(auto& spot : spots) {
+            if(spot.isOccupied() && spot.getParkedVehiclePlate() == plate) {
+                return spot.unpark(plate, exitTime);
+            }
+        }
+        cout << "Vehicle [" << plate << "] not found.\n";
         return false;
     }
 };
