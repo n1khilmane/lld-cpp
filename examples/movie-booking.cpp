@@ -194,3 +194,26 @@ public:
         }
     }
 };
+
+int main() {
+    BookingSystem system;
+
+    Movie m1("Avengers", 120);
+    Show show1(1, "18:00", m1, 10);
+
+    Screen screen1(101);
+    screen1.addShow(show1);
+
+    Theatre theatre1(1, "PVR", "Boston");
+    theatre1.addScreen(screen1);
+    system.addTheatre(theatre1);
+
+    User user1("Nikhil");
+
+    system.book(user1, 1, 3);  // Book seat 3 for Show 1
+    system.book(user1, 1, 3);  // Try to book already booked seat
+
+    system.cancel(user1, 1, 1);  // Cancel booking with ID 1
+}
+
+
